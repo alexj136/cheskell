@@ -10,12 +10,45 @@ data Rank         = King | Queen | Bishop | Knight | Rook | Pawn
                   deriving (Show, Eq, Ord)
 data Colour       = Black | White
                   deriving (Show, Eq, Ord)
-type Piece        = (Rank, Colour)
+type Piece        =
+    ( Rank   -- The kind of piece
+    , Colour -- The colour
+    , Bool   -- Has it moved yet?
+    )
+type Square       = Maybe Piece
 newtype EightOf a = EightOf (a, a, a, a, a, a, a, a) deriving Show
-type Row          = EightOf (Maybe Piece)
-type Board        = EightOf Row
+type Row          = EightOf Square
+type Board        =
+    ( EightOf Row    -- The board layout
+    , Maybe Move     -- The previous move (Nothing only before the first move)
+    , Maybe Move     -- Other piece that moved last turn (if player castled)
+    , Maybe Location -- Location of piece captured by an en passant last turn
+    )
 type Location     = (Int, Int)
 type Move         = (Location, Location)
+
+----------------------------
+-- Pretty-printing functions
+----------------------------
+
+ppRank :: Rank -> String
+ppRank r = if r == Knight then "N" else [head (show r)]
+
+ppColour :: Colour -> String
+ppColour c = case c of { Black -> "B" ; White -> "W" }
+
+ppPiece :: Piece -> String
+ppPiece (r, c, _) = ppRank r ++ ppColour c
+
+ppSquare :: Square -> String
+ppSquare = maybe "[]" ppPiece
+
+ppRow :: Row -> String
+ppRow = concat . intersperse " " . map ppSquare . toList
+
+ppBoard :: Board -> String
+ppBoard (grid, _, _, _) =
+    (++ "\n") . concat . intersperse "\n" . map ppRow . toList $ grid
 
 ----------------------------------
 -- Helper functions for data types
@@ -50,61 +83,58 @@ labelIdx (EightOf (a, b, c, d, e, f, g, h)) =
 
 -- For a test and an EightOf, determine which members of the EightOf (by index)
 -- pass the test
-test :: (a -> Bool) -> EightOf a -> [Int]
-test t = map fst . filter snd . toList . labelIdx . fmap t
+passerIdxs :: (a -> Bool) -> EightOf a -> [Int]
+passerIdxs t = map fst . filter snd . toList . labelIdx . fmap t
 
 instance Functor EightOf where
     fmap f = fromJust . fromList . map f . toList
 
 -- Human-readable indexing functions
 row :: Int -> Board -> Maybe Row
-row = i8
-col :: Int -> Row -> Maybe (Maybe Piece)
+row r (g, _, _, _) = i8 r g
+col :: Int -> Row -> Maybe Square
 col = i8
-idx :: Int -> Int -> Board -> Maybe (Maybe Piece)
-idx r c b = row r b >>= col c
+idx :: Location -> Board -> Maybe Square
+idx (r, c) b = row r b >>= col c
+
+rank :: Piece -> Rank
+rank (r, _, _) = r
+clr :: Piece -> Colour
+clr (_, c, _) = c
+hasMoved :: Piece -> Bool
+hasMoved (_, _, h) = h
 
 -- Get the locations of all White or Black Pieces on a given board
 colourLocs :: Colour -> Board -> [Location]
-colourLocs clr = concat . map (\p -> map (\n -> (fst p, n)) (snd p))
+colourLocs colr (grid, _, _, _) =
+    concat . map (\p -> map (\n -> (fst p, n)) (snd p))
     . filter ((/= []) . snd) . toList . labelIdx
-    . fmap (test (maybe False id . fmap ((== clr) . snd)))
+    . fmap (passerIdxs (maybe False id . fmap ((== colr) . clr))) $ grid
 
 -- A board in the initial configuration
 start :: Board
-start = EightOf
-    ( fromJust . fromList . map (\p -> Just(p, Black)) $
-        [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
-    , eightOf (Just (Pawn, Black))
-    , eightOf Nothing
-    , eightOf Nothing
-    , eightOf Nothing
-    , eightOf Nothing
-    , eightOf (Just (Pawn, White))
-    , fromJust . fromList . map (\p -> Just(p, White)) $
-        [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+start =
+    ( EightOf
+      ( fromJust . fromList . map (\p -> Just(p, Black, False)) $
+          [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+      , eightOf (Just (Pawn, Black, False))
+      , eightOf Nothing
+      , eightOf Nothing
+      , eightOf Nothing
+      , eightOf Nothing
+      , eightOf (Just (Pawn, White, False))
+      , fromJust . fromList . map (\p -> Just(p, White, False)) $
+          [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
+      )
+    , Nothing
+    , Nothing
+    , Nothing
     )
 
-----------------------------
--- Pretty-printing functions
-----------------------------
-
-ppRank :: Rank -> String
-ppRank r = if r == Knight then "N" else [head (show r)]
-
-ppColour :: Colour -> String
-ppColour c = case c of { Black -> "B" ; White -> "W" }
-
-ppSquare :: Maybe Piece -> String
-ppSquare = maybe "[]" (\p -> ppRank (fst p) ++ ppColour (snd p))
-
-ppRow :: Row -> String
-ppRow = concat . intersperse " " . map ppSquare . toList
-
-ppBoard :: Board -> String
-ppBoard = (++ "\n") . concat . intersperse "\n" . map ppRow . toList
-
 -- Move information
---movesOf :: Board -> Location -> [(Location, Maybe Piece)]
+movesOf :: Location -> Board -> [(Location, Square)]
+movesOf l b = case idx l b of
+    Nothing -> []
+    Just _  -> undefined -- TODO
 
 --daugters :: Colour -> Board -> [Board]
