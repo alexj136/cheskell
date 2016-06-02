@@ -1,6 +1,5 @@
 module Chess where
 import Data.List  ( intersperse )
-import Data.Maybe ( fromJust    )
 
 -------------------
 -- Chess data types
@@ -88,8 +87,6 @@ inBounds (r, c) = r <= 8 && r >= 1 && c <= 8 && c >= 1
 
 addLocation :: Location -> Location -> Location
 addLocation (r1, c1) (r2, c2) = (r1 + r2, c1 + c2)
-(+~) :: Location -> Location -> Location
-(+~) = addLocation
 
 -- Label elements of an EightOf by index
 labelIdx :: EightOf a -> EightOf (Int, a)
@@ -149,17 +146,22 @@ start =
     , Nothing
     )
 
+knightMoves :: [Location]
+knightMoves =
+    [(1, 2), (-1, 2), (1, -2), (-1, -2), (2, 1), (-2, 1), (2, -1), (-2, -1)]
+
 -- Move information
-movesOf :: Location -> Board -> [(Location, Square)]
+movesOf :: Location -> Board -> [Board]
 movesOf l b = case idx l b of
     Nothing                   -> []         -- No piece, so no moves possible
-    Just (Knight, c, _)       -> undefined $ filter inBounds
-        [ (l +~ (1, 2)), (l +~ (-1, 2)), (l +~ (1, -2)), (l +~ (-1, -2))
-        , (l +~ (2, 1)), (l +~ (-2, 1)), (l +~ (2, -1)), (l +~ (-2, -1))
-        ] -- TODO
+    Just (Knight, c, _)       -> map (setSquare l Nothing)
+        . undefined
+        . filter (\(_, s) -> case s of { Just (_, cOf, _) -> c == cOf ; _ -> False })
+        . map (\l -> (l, idx l b))
+        . filter inBounds
+        . map (addLocation l)
+        $ knightMoves -- TODO
     Just (Pawn, White, False) -> undefined  -- TODO
     Just (Pawn, White, True ) -> undefined  -- TODO
     Just (Pawn, Black, False) -> undefined  -- TODO
     Just (Pawn, Black, True ) -> undefined  -- TODO
-
---daugters :: Colour -> Board -> [Board]
