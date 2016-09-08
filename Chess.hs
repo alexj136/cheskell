@@ -161,7 +161,19 @@ movesOf l b = case idx l b of
         . filter inBounds
         . map (addLocation l)
         $ knightMoves -- TODO
-    Just (Pawn, White, False) -> undefined  -- TODO
-    Just (Pawn, White, True ) -> undefined  -- TODO
-    Just (Pawn, Black, False) -> undefined  -- TODO
-    Just (Pawn, Black, True ) -> undefined  -- TODO
+    Just (Pawn  , White, False) -> undefined  -- TODO
+    Just (Pawn  , White, True ) -> undefined  -- TODO
+    Just (Pawn  , Black, False) -> undefined  -- TODO
+    Just (Pawn  , Black, True ) -> undefined  -- TODO
+    Just (Bishop, White, _    ) -> undefined  -- TODO
+    Just (Bishop, Black, _    ) -> undefined  -- TODO
+    Just (Queen , White, _    ) -> undefined  -- TODO - perhaps we can simplify
+    Just (Queen , Black, _    ) -> undefined  -- TODO   queen by unifying rook and bishop?
+    Just (Rook  , White, True ) -> undefined  -- TODO
+    Just (Rook  , White, False) -> undefined  -- TODO
+    Just (Rook  , Black, True ) -> undefined  -- TODO
+    Just (Rook  , Black, False) -> undefined  -- TODO
+    Just (King  , White, True ) -> undefined  -- TODO
+    Just (King  , White, False) -> undefined  -- TODO
+    Just (King  , Black, True ) -> undefined  -- TODO
+    Just (King  , Black, False) -> undefined  -- TODO
