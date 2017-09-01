@@ -150,6 +150,34 @@ knightMoves :: [Location]
 knightMoves =
     [(1, 2), (-1, 2), (1, -2), (-1, -2), (2, 1), (-2, 1), (2, -1), (-2, -1)]
 
+rookMoves :: [Location]
+rookMoves =
+    [ ( 0,  1), ( 0,  2), ( 0,  3), ( 0,  4), ( 0,  5), ( 0,  6), ( 0,  7)
+    , ( 0, -1), ( 0, -2), ( 0, -3), ( 0, -4), ( 0, -5), ( 0, -6), ( 0, -7)
+    , ( 1,  0), ( 2,  0), ( 3,  0), ( 4,  0), ( 5,  0), ( 6,  0), ( 7,  0)
+    , (-1,  0), (-2,  0), (-3,  0), (-4,  0), (-5,  0), (-6,  0), (-7,  0)
+    ]
+
+bishopMoves :: [Location]
+bishopMoves =
+    [ ( 1,  1), ( 2,  2), ( 3,  3), ( 4,  4), ( 5,  5), ( 6,  6), ( 7,  7)
+    , ( 1, -1), ( 2, -2), ( 3, -3), ( 4, -4), ( 5, -5), ( 6, -6), ( 7, -7)
+    , (-1,  1), (-2,  2), (-3,  3), (-4,  4), (-5,  5), (-6,  6), (-7,  7)
+    , (-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6), (-7, -7)
+    ]
+
+queenMoves :: [Location]
+queenMoves = rookMoves ++ bishopMoves
+
+kingMoves :: [Location]
+kingMoves = 
+    [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+
+pawnMoves :: Piece -> [Location]
+pawnMoves (Pawn, White, moved) = undefined
+pawnMoves (Pawn, Black, moved) = undefined
+pawnMoves _                    = error "pawnMoves: not a pawn"
+
 -- Move information
 movesOf :: Location -> Board -> [Board]
 movesOf l b = case idx l b of
